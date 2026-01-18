@@ -23,8 +23,10 @@ class _HomePageState extends State<HomePage> {
   PredictState state = PredictState.notPredicted;
   List<DetectedObject> predictions = [];
   bool isCamReady = false;
-  bool isAutoPredict = false;
+  bool isLivePredict = false;
+  bool isLivePredictBusy = false;
 
+  final predictor = ObjectDetectionService();
   late final CameraController camController;
 
   @override
@@ -83,6 +85,7 @@ class _HomePageState extends State<HomePage> {
                     if (!isCamReady) {
                       return LoadingView(message: "Loading...");
                     }
+                    if (isLivePredict) {}
                     if (state == PredictState.notPredicted) {
                       return CameraPreview(camController);
                     }
@@ -90,6 +93,7 @@ class _HomePageState extends State<HomePage> {
                       image: image!,
                       predictions: predictions,
                       state: state,
+                      isLiveMode: isLivePredict,
                     );
                   },
                 ),
@@ -110,7 +114,7 @@ class _HomePageState extends State<HomePage> {
                             // IMAGE PICKER
                             Builder(
                               builder: (context) {
-                                if (isAutoPredict) {
+                                if (isLivePredict) {
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 15.5,
@@ -153,23 +157,21 @@ class _HomePageState extends State<HomePage> {
                               iconSize: 30,
                               style: IconButton.styleFrom(
                                 backgroundColor:
-                                    isAutoPredict
+                                    isLivePredict
                                         ? Color(0xFF00696B)
                                         : Colors.white,
                                 foregroundColor:
-                                    isAutoPredict
+                                    isLivePredict
                                         ? Colors.white
                                         : Color(0xFF00696B),
                               ),
                               padding: EdgeInsets.all(16),
                               icon: Icon(
-                                isAutoPredict
+                                isLivePredict
                                     ? Icons.center_focus_weak_rounded
                                     : Icons.center_focus_strong,
                               ),
-                              onPressed: () {
-                                setState(() => isAutoPredict = !isAutoPredict);
-                              },
+                              onPressed: _livePredict,
                             ),
                           ],
                         ),
@@ -235,12 +237,30 @@ class _HomePageState extends State<HomePage> {
         state = PredictState.predicting;
         source = ImgSource.camera;
       });
-      final predictor = ObjectDetectionService();
       predictions = await predictor.predictFromFilePath(capturedPict.path);
       await Future.delayed(Duration(seconds: 5));
       setState(() => state = PredictState.predicted);
     } catch (error, stacktrace) {
       log("$error\n$stacktrace");
+    }
+  }
+
+  _livePredict() async {
+    setState(() => isLivePredict = !isLivePredict);
+    if (isLivePredict) {
+      await camController.startImageStream((image) async {
+        log("LIVE PREDICT");
+        // if (isLivePredictBusy) return;
+        // setState(() => isLivePredictBusy = true);
+        predictions = await predictor.livePredict(
+          image: image,
+          cameraDesc: camController.description,
+        );
+        // setState(() => isLivePredictBusy = false);
+      });
+    } else {
+      await camController.stopImageStream();
+      setState(() => isLivePredictBusy = false);
     }
   }
 }

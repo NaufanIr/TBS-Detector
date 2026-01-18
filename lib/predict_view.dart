@@ -14,11 +14,13 @@ class PredictView extends StatefulWidget {
     required this.image,
     required this.predictions,
     required this.state,
+    required this.isLiveMode,
   });
 
   final File image;
   final List<DetectedObject> predictions;
   final PredictState state;
+  final bool isLiveMode;
 
   @override
   State<PredictView> createState() => _PredictViewState();
@@ -44,6 +46,24 @@ class _PredictViewState extends State<PredictView> {
           constraints.maxWidth,
           constraints.maxWidth / aspectRatio,
         );
+        if (widget.isLiveMode) {
+          return Stack(
+            alignment: AlignmentDirectional.center,
+            children: [
+              SizedBox(
+                width: double.maxFinite,
+                height: widgetSize.width / aspectRatio,
+                child: CustomPaint(
+                  painter: BoundingBoxPainter(
+                    widget.predictions.map((e) => e.boundingBox).toList(),
+                    _imageSize!,
+                    widgetSize,
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
         return GestureDetector(
           child: Stack(
             alignment: AlignmentDirectional.center,
