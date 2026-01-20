@@ -5,12 +5,19 @@ import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 
 class ObjectDetectionService {
   Future<List<DetectedObject>> predictFromFilePath(String path) async {
+    final modelPath = await _getAssetPath(
+      "assets/models/tbs-detector-int8-meta.tflite",
+      // "assets/models/object_labeler.tflite",
+    );
     final detector = ObjectDetector(
-      options: ObjectDetectorOptions(
+      options: LocalObjectDetectorOptions(
         mode: DetectionMode.single,
+        modelPath: modelPath,
         classifyObjects: true,
         multipleObjects: true,
       ),
@@ -20,20 +27,36 @@ class ObjectDetectionService {
     log(
       "Labels: ${result.map((e) => e.labels.map((l) => "Label: ${l.text}, Acc: ${l.confidence}").toList()).toList()}",
     );
-    // log(
-    //   "${result.map((e) => "Rect(top: ${e.boundingBox.top}, bottom: ${e.boundingBox.bottom}, left: ${e.boundingBox.left}, right: ${e.boundingBox.right})\n").toList()}",
-    // );
     return result;
-    // final predicts = await _detector.processImage(inputImage);
-    // for (var predict in predicts) {
-    //   final labels =
-    //       predict.labels.map((label) {
-    //         return "Label(text: ${label.text}, confidance: ${label.confidence})";
-    //       }).toList();
-    //   log("$labels");
-    //   // final boundingBox = predict.boundingBox;
-    // }
   }
+
+  // Future<List<DetectedObject>> predictFromFilePath(String path) async {
+  //   final detector = ObjectDetector(
+  //     options: ObjectDetectorOptions(
+  //       mode: DetectionMode.single,
+  //       classifyObjects: true,
+  //       multipleObjects: true,
+  //     ),
+  //   );
+  //   final inputImage = InputImage.fromFilePath(path);
+  //   final result = await detector.processImage(inputImage);
+  //   log(
+  //     "Labels: ${result.map((e) => e.labels.map((l) => "Label: ${l.text}, Acc: ${l.confidence}").toList()).toList()}",
+  //   );
+  //   // log(
+  //   //   "${result.map((e) => "Rect(top: ${e.boundingBox.top}, bottom: ${e.boundingBox.bottom}, left: ${e.boundingBox.left}, right: ${e.boundingBox.right})\n").toList()}",
+  //   // );
+  //   return result;
+  //   // final predicts = await _detector.processImage(inputImage);
+  //   // for (var predict in predicts) {
+  //   //   final labels =
+  //   //       predict.labels.map((label) {
+  //   //         return "Label(text: ${label.text}, confidance: ${label.confidence})";
+  //   //       }).toList();
+  //   //   log("$labels");
+  //   //   // final boundingBox = predict.boundingBox;
+  //   // }
+  // }
 
   Future<List<DetectedObject>> livePredict({
     required CameraImage image,
@@ -95,5 +118,22 @@ class ObjectDetectionService {
         bytesPerRow: plane.bytesPerRow, // used only in iOS
       ),
     );
+  }
+
+  Future<String> _getAssetPath(String asset) async {
+    final appDir = await getApplicationSupportDirectory();
+    final path = "${appDir.path}/$asset";
+    await Directory(dirname(path)).create(recursive: true);
+    final file = File(path);
+    if (!await file.exists()) {
+      final byteData = await rootBundle.load(asset);
+      await file.writeAsBytes(
+        byteData.buffer.asUint8List(
+          byteData.offsetInBytes,
+          byteData.lengthInBytes,
+        ),
+      );
+    }
+    return file.path;
   }
 }

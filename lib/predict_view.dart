@@ -2,10 +2,10 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:tbs_detector/bounding_box_painter.dart';
+import 'package:tbs_detector/detector_service.dart';
 import 'package:tbs_detector/main.dart';
 
 class PredictView extends StatefulWidget {
@@ -18,7 +18,7 @@ class PredictView extends StatefulWidget {
   });
 
   final File image;
-  final List<DetectedObject> predictions;
+  final List<PredictResult> predictions;
   final PredictState state;
   final bool isLiveMode;
 
@@ -55,7 +55,7 @@ class _PredictViewState extends State<PredictView> {
                 height: widgetSize.width / aspectRatio,
                 child: CustomPaint(
                   painter: BoundingBoxPainter(
-                    widget.predictions.map((e) => e.boundingBox).toList(),
+                    widget.predictions.map((e) => e.rect).toList(),
                     _imageSize!,
                     widgetSize,
                   ),
@@ -116,7 +116,7 @@ class _PredictViewState extends State<PredictView> {
                   height: widgetSize.width / aspectRatio,
                   child: CustomPaint(
                     painter: BoundingBoxPainter(
-                      widget.predictions.map((e) => e.boundingBox).toList(),
+                      widget.predictions.map((e) => e.rect).toList(),
                       _imageSize!,
                       widgetSize,
                     ),

@@ -5,9 +5,9 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:tbs_detector/detector_service.dart';
 
 import 'package:tbs_detector/main.dart';
-import 'package:tbs_detector/object_detection_service.dart';
 import 'package:tbs_detector/predict_view.dart';
 
 class HomePage extends StatefulWidget {
@@ -21,18 +21,19 @@ class _HomePageState extends State<HomePage> {
   File? image;
   ImgSource source = ImgSource.camera;
   PredictState state = PredictState.notPredicted;
-  List<DetectedObject> predictions = [];
+  List<PredictResult> predictions = [];
   bool isCamReady = false;
   bool isLivePredict = false;
   bool isLivePredictBusy = false;
 
-  final predictor = ObjectDetectionService();
+  // final predictor = ObjectDetectionService();
   late final CameraController camController;
+  late final DetectorService detectorService;
 
   @override
   void initState() {
     super.initState();
-    _initCamera();
+    _init();
   }
 
   @override
@@ -198,8 +199,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  _initCamera() async {
+  _init() async {
     try {
+      // 1. Init Camera
       final cameras = await availableCameras();
       camController = CameraController(
         cameras.first,
@@ -208,6 +210,8 @@ class _HomePageState extends State<HomePage> {
       );
       await camController.initialize();
       isCamReady = true;
+      // 2. Init Detector Service
+      detectorService = await DetectorService.createAsync();
       if (mounted) setState(() {});
     } catch (error, stacktrace) {
       log("$error\n$stacktrace");
@@ -223,8 +227,9 @@ class _HomePageState extends State<HomePage> {
       state = PredictState.predicting;
       source = ImgSource.gallery;
     });
-    final predictor = ObjectDetectionService();
-    predictions = await predictor.predictFromFilePath(selectedImg.path);
+    predictions = await detectorService.analizeImage(File(selectedImg.path));
+    log("${predictions.map((e) => e.toMap()).toList()}");
+    // predictions = await predictor.predictFromFilePath(selectedImg.path);
     await Future.delayed(Duration(seconds: 5));
     setState(() => state = PredictState.predicted);
   }
@@ -237,7 +242,7 @@ class _HomePageState extends State<HomePage> {
         state = PredictState.predicting;
         source = ImgSource.camera;
       });
-      predictions = await predictor.predictFromFilePath(capturedPict.path);
+      // predictions = await predictor.predictFromFilePath(capturedPict.path);
       await Future.delayed(Duration(seconds: 5));
       setState(() => state = PredictState.predicted);
     } catch (error, stacktrace) {
@@ -252,10 +257,10 @@ class _HomePageState extends State<HomePage> {
         log("LIVE PREDICT");
         // if (isLivePredictBusy) return;
         // setState(() => isLivePredictBusy = true);
-        predictions = await predictor.livePredict(
-          image: image,
-          cameraDesc: camController.description,
-        );
+        // predictions = await predictor.livePredict(
+        //   image: image,
+        //   cameraDesc: camController.description,
+        // );
         // setState(() => isLivePredictBusy = false);
       });
     } else {
