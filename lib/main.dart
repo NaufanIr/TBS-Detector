@@ -15,6 +15,11 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF00696B)),
+        chipTheme: ChipThemeData(
+          shape: StadiumBorder(
+            side: BorderSide(width: 3, color: Color(0xFF00696B)),
+          ),
+        ),
       ),
       home: HomePage(),
     );

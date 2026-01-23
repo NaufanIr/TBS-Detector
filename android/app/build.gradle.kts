@@ -7,8 +7,9 @@ plugins {
 
 android {
     namespace = "com.example.tbs_detector"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = "27.0.12077973"
+    // compileSdk = flutter.compileSdkVersion
     // ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -41,10 +42,9 @@ android {
         }
     }
 
-    // aaptOptions {
-    //     noCompress = "tflite"
-    //     noCompress = "lite"
-    // }
+    aaptOptions {
+        noCompress.add("tflite")
+    }
 }
 
 flutter {

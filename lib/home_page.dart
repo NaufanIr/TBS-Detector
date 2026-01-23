@@ -3,11 +3,11 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tbs_detector/detector_service.dart';
 
 import 'package:tbs_detector/main.dart';
+import 'package:tbs_detector/predict_result.dart';
 import 'package:tbs_detector/predict_view.dart';
 
 class HomePage extends StatefulWidget {
@@ -26,7 +26,6 @@ class _HomePageState extends State<HomePage> {
   bool isLivePredict = false;
   bool isLivePredictBusy = false;
 
-  // final predictor = ObjectDetectionService();
   late final CameraController camController;
   late final DetectorService detectorService;
 
@@ -63,12 +62,10 @@ class _HomePageState extends State<HomePage> {
                       ),
                       PredictState.predicted => Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          spacing: 16,
-                          children: [
-                            Chip(label: Text("TBS: ${predictions.length}")),
-                            Chip(label: Text("Avg.acc: 75%")),
-                          ],
+                        child: Chip(
+                          label: Text("TBS: ${predictions.length}"),
+                          shape: StadiumBorder(side: BorderSide.none),
+                          backgroundColor: Colors.amber,
                         ),
                       ),
                     };
@@ -134,7 +131,9 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   style: IconButton.styleFrom(
                                     foregroundColor: Color(0xFF00696B),
+                                    // foregroundColor: Color.fromARGB(255, 0, 24, 163),
                                     backgroundColor: Color(0xFFCCE8E8),
+                                    // backgroundColor: Colors.amber,
                                   ),
                                   onPressed: isCamReady ? _selectImage : null,
                                 );
@@ -153,27 +152,28 @@ class _HomePageState extends State<HomePage> {
                               onPressed: isCamReady ? _takePicture : null,
                               child: SizedBox(),
                             ),
-                            // LIVE MODE TOGGLE
-                            IconButton.filled(
-                              iconSize: 30,
-                              style: IconButton.styleFrom(
-                                backgroundColor:
-                                    isLivePredict
-                                        ? Color(0xFF00696B)
-                                        : Colors.white,
-                                foregroundColor:
-                                    isLivePredict
-                                        ? Colors.white
-                                        : Color(0xFF00696B),
-                              ),
-                              padding: EdgeInsets.all(16),
-                              icon: Icon(
-                                isLivePredict
-                                    ? Icons.center_focus_weak_rounded
-                                    : Icons.center_focus_strong,
-                              ),
-                              onPressed: _livePredict,
-                            ),
+                            SizedBox(width: 62),
+                            // // LIVE MODE TOGGLE
+                            // IconButton.filled(
+                            //   iconSize: 30,
+                            //   style: IconButton.styleFrom(
+                            //     backgroundColor:
+                            //         isLivePredict
+                            //             ? Color(0xFF00696B)
+                            //             : Colors.white,
+                            //     foregroundColor:
+                            //         isLivePredict
+                            //             ? Colors.white
+                            //             : Color(0xFF00696B),
+                            //   ),
+                            //   padding: EdgeInsets.all(16),
+                            //   icon: Icon(
+                            //     isLivePredict
+                            //         ? Icons.center_focus_weak_rounded
+                            //         : Icons.center_focus_strong,
+                            //   ),
+                            //   onPressed: _livePredict,
+                            // ),
                           ],
                         ),
                       );
@@ -228,10 +228,7 @@ class _HomePageState extends State<HomePage> {
       source = ImgSource.gallery;
     });
     predictions = await detectorService.analizeImage(File(selectedImg.path));
-    log("${predictions.map((e) => e.toMap()).toList()}");
-    // predictions = await predictor.predictFromFilePath(selectedImg.path);
-    await Future.delayed(Duration(seconds: 5));
-    setState(() => state = PredictState.predicted);
+    if (mounted) setState(() => state = PredictState.predicted);
   }
 
   _takePicture() async {
@@ -242,30 +239,29 @@ class _HomePageState extends State<HomePage> {
         state = PredictState.predicting;
         source = ImgSource.camera;
       });
-      // predictions = await predictor.predictFromFilePath(capturedPict.path);
-      await Future.delayed(Duration(seconds: 5));
-      setState(() => state = PredictState.predicted);
+      predictions = await detectorService.analizeImage(File(capturedPict.path));
+      if (mounted) setState(() => state = PredictState.predicted);
     } catch (error, stacktrace) {
       log("$error\n$stacktrace");
     }
   }
 
-  _livePredict() async {
-    setState(() => isLivePredict = !isLivePredict);
-    if (isLivePredict) {
-      await camController.startImageStream((image) async {
-        log("LIVE PREDICT");
-        // if (isLivePredictBusy) return;
-        // setState(() => isLivePredictBusy = true);
-        // predictions = await predictor.livePredict(
-        //   image: image,
-        //   cameraDesc: camController.description,
-        // );
-        // setState(() => isLivePredictBusy = false);
-      });
-    } else {
-      await camController.stopImageStream();
-      setState(() => isLivePredictBusy = false);
-    }
-  }
+  // _livePredict() async {
+  //   setState(() => isLivePredict = !isLivePredict);
+  //   if (isLivePredict) {
+  //     await camController.startImageStream((image) async {
+  //       log("LIVE PREDICT");
+  //       // if (isLivePredictBusy) return;
+  //       // setState(() => isLivePredictBusy = true);
+  //       // predictions = await predictor.livePredict(
+  //       //   image: image,
+  //       //   cameraDesc: camController.description,
+  //       // );
+  //       // setState(() => isLivePredictBusy = false);
+  //     });
+  //   } else {
+  //     await camController.stopImageStream();
+  //     setState(() => isLivePredictBusy = false);
+  //   }
+  // }
 }

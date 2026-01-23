@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:tbs_detector/bounding_box_painter.dart';
-import 'package:tbs_detector/detector_service.dart';
 import 'package:tbs_detector/main.dart';
+import 'package:tbs_detector/predict_result.dart';
 
 class PredictView extends StatefulWidget {
   const PredictView({
